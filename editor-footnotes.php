@@ -50,4 +50,5 @@ function autoload( $cls ) {
 }
 spl_autoload_register( '\Editor_Footnotes\autoload' );
 
+// Load the Editor class on admin pages
 add_action( 'admin_init', [ '\Editor_Footnotes\Editor', 'instance' ] );
