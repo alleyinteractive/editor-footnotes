@@ -1,0 +1,1 @@
+# Editor Footnotes <a style="float:right;" href="https://travis-ci.org/alleyinteractive/editor-footnotes"><img src="https://travis-ci.org/alleyinteractive/editor-footnotes.svg?branch=master" alt="Build Status"></a>
