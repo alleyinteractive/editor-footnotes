@@ -48,11 +48,22 @@ tinymce.PluginManager.add('editor_footnotes', function(editor, url) {
           // editor.insertContent('Title: ' + e.data.footnote);
 
           var text = editor.selection.getContent({ 'format' : 'raw' });
-          if (text && text.length > 0) {
+
+          if (footnoteNode) {
+            // if already exists, then don't nest another inside
+            footnoteNode.setAttribute('data-footnote', e.data.footnote);
+          } else if (text && text.length > 0) {
             var $node = $( '<span class="footnote" />' ).attr( 'data-footnote', e.data.footnote ).text( text );
             editor.insertContent( $node[0].outerHTML );
           }
         }
+      });
+    },
+    onPostRender: function() {
+      var self = this;
+
+      editor.on('NodeChange', function(event) {
+        self.disabled(!getSelectedFootnote() && '' === editor.selection.getContent());
       });
     }
   });
