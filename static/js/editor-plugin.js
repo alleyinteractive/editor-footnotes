@@ -1,70 +1,238 @@
-tinymce.PluginManager.add('editor_footnotes', function(editor, url) {
-  var $ = window.jQuery;
-
-  function getSelectedFootnote() {
-    var footnote, html,
-      node = editor.selection.getNode(),
-      span = editor.dom.getParent( node, 'span[data-footnote]' );
-
-    if ( ! span ) {
-      html = editor.selection.getContent({ format: 'raw' });
-
-      if ( html && html.indexOf( '</span>' ) !== -1 ) {
-        content = html.match( /data-footnote="([^">]+)"/ );
-
-        if ( content && content[1] ) {
-          span = editor.$( 'a[data-footnote="' + content[1] + '"]', node )[0];
-        }
-
-        if ( span ) {
-          editor.selection.select( span );
-        }
-      }
-    }
-
-    return span;
-  }
-
-
-  // Add a button that opens a window
-  editor.addButton('editor_footnotes', {
-    icon: 'dashicon dashicons-format-status',
-    onclick: function() {
-      var footnoteNode = getSelectedFootnote(),
-        textarea = {type: 'textbox', name: 'footnote', label: 'Footnote', multiline: true, rows: 3};
-
-      if ( footnoteNode ) {
-        textarea.value = editor.dom.getAttrib( footnoteNode, 'data-footnote' );
-      }
-
-      // Open window
-      editor.windowManager.open({
-        title: 'Footnote',
-        width: 500,
-        height: 110,
-        body: [ textarea ],
-        onsubmit: function(e) {
-          // Insert content when the window form is submitted
-          // editor.insertContent('Title: ' + e.data.footnote);
-
-          var text = editor.selection.getContent({ 'format' : 'raw' });
-
-          if (footnoteNode) {
-            // if already exists, then don't nest another inside
-            footnoteNode.setAttribute('data-footnote', e.data.footnote);
-          } else if (text && text.length > 0) {
-            var $node = $( '<span class="footnote" />' ).attr( 'data-footnote', e.data.footnote ).text( text );
-            editor.insertContent( $node[0].outerHTML );
-          }
-        }
-      });
+( function( tinymce ) {
+  tinymce.ui.footnotePreview = tinymce.ui.Control.extend( {
+    stub: '(empty)',
+    renderHtml: function() {
+      return (
+        '<div id="' + this._id + '" class="footnote-preview">' +
+          '<span>' + this.stub + '</span>' +
+        '</div>'
+      );
     },
-    onPostRender: function() {
-      var self = this;
+    setFootnoteStub: function ( text ) {
+      var limit = 40,
+          stub = ( text && text.length > limit ) ? text.slice( 0, limit ) + '\u2026' : text;
 
-      editor.on('NodeChange', function(event) {
-        self.disabled(!getSelectedFootnote() && '' === editor.selection.getContent());
-      });
+      tinymce.$( this.getEl().firstChild ).text( stub );
     }
   });
-});
+
+  tinymce.ui.footnoteInput = tinymce.ui.Control.extend( {
+    renderHtml: function() {
+      // TODO - remove inline styles when css hooked up correctly
+      return (
+        '<div id="' + this._id + '" class="footnote-input">' +
+          '<textarea hidefocus="1" rows="3" placeholder="' + tinymce.translate( 'Enter Footnote' ) +
+          '" style="background-color: white;"></textarea>' +
+        '</div>'
+      );
+    },
+    getFootnoteText: function() {
+      var text = this.getEl().firstChild.value || '';
+
+      if ( ! tinymce.trim( text ) ) {
+        return '';
+      }
+
+      return text;
+    },
+    setFootnoteText: function(text) {
+      this.getEl().firstChild.value = text;
+    },
+    reset: function() {
+      var footnoteInput = this.getEl().firstChild;
+
+      footnoteInput.value = '';
+    }
+  });
+
+  tinymce.PluginManager.add('editor_footnotes', function( editor ) {
+    var toolbar;
+    var editToolbar;
+    var previewInstance;
+    var inputInstance;
+    var footnoteNode;
+    var $ = window.jQuery;
+
+    function getSelectedFootnote() {
+      var footnote, html,
+        node = editor.selection.getNode(),
+        span = editor.dom.getParent( node, 'span[data-footnote]' );
+
+      if ( ! span ) {
+        html = editor.selection.getContent( { format: 'raw' } );
+
+        if ( html && html.indexOf( '</span>' ) !== -1 ) {
+          content = html.match( /data-footnote="([^">]+)"/ );
+
+          if ( content && content[1] ) {
+            span = editor.$( 'span[data-footnote="' + content[1] + '"]', node )[0];
+          }
+
+          if ( span ) {
+            editor.selection.select( span );
+          }
+        }
+      }
+
+      return span;
+    }
+
+    function setPlaceholder() {
+      var text, $node;
+      text = editor.selection.getContent( { format: 'raw' } );
+      $placeholder = $( '<span class="footnote" />' ).attr( 'data-footnote-edit', true )
+                                                     .attr( 'data-footnote', '' )
+                                                     .text( text );
+
+      editor.insertContent( $placeholder[0].outerHTML );
+
+      return editor.$( 'span[data-footnote-edit]' )[0];
+    }
+
+    function removePlaceholders() {
+      editor.$( 'span.footnote' ).each( function( i, element ) {
+        var $element = editor.$( element );
+
+        if ( $element.attr( 'data-footnote-edit' ) ) {
+          $element.attr( 'data-footnote-edit', null );
+        }
+      });
+    }
+
+    editor.on( 'preinit', function() {
+      if ( editor.wp && editor.wp._createToolbar ) {
+        toolbar = editor.wp._createToolbar( [
+          'footnote_preview',
+          'footnote_edit',
+          'footnote_remove',
+        ], true );
+
+        var editButtons = [
+          'footnote_input',
+          'footnote_apply'
+        ];
+
+        editToolbar = editor.wp._createToolbar( editButtons, true );
+
+        editToolbar.on( 'hide', function() {
+          editor.execCommand( 'wp_link_cancel' );
+        } );
+      }
+    });
+
+    editor.addCommand( 'footnote_edit', function() {
+      footnoteNode = getSelectedFootnote();
+
+      if ( footnoteNode ) {
+        editor.dom.setAttribs( footnoteNode, { 'data-footnote-edit': true } );
+      } else {
+        removePlaceholders();
+        footnoteNode = setPlaceholder();
+        editor.selection.select(footnoteNode);
+        editor.nodeChanged();
+      }
+    } );
+
+    editor.addCommand( 'footnote_apply', function() {
+      var text;
+
+      if ( footnoteNode ) {
+        text = inputInstance.getFootnoteText();
+        editor.focus();
+
+        editor.dom.setAttribs( footnoteNode, { 'data-footnote': text, 'data-footnote-edit': null } );
+      }
+
+      inputInstance.reset();
+      editor.nodeChanged();
+    } );
+
+    editor.addCommand( 'footnote_cancel', function() {
+      inputInstance.reset();
+      editor.focus();
+    } );
+
+    editor.addCommand( 'footnote_remove', function() {
+      editor.dom.remove( footnoteNode, true );
+    } );
+
+    editor.addButton('editor_footnotes', {
+      icon: 'dashicon dashicons-format-status',
+      tooltip: 'Insert Footnote',
+      cmd: 'footnote_edit',
+      onPostRender: function() {
+        var self = this;
+
+        // only enable on some kind of selection
+        editor.on( 'NodeChange', function( event ) {
+          self.disabled( !getSelectedFootnote() && '' === editor.selection.getContent() );
+        });
+      }
+    });
+
+    editor.addButton( 'footnote_preview', {
+      type: 'footnotePreview',
+      onPostRender: function() {
+        previewInstance = this;
+      }
+    } );
+
+    editor.addButton( 'footnote_input', {
+      type: 'footnoteInput',
+      onPostRender: function() {
+        inputInstance = this;
+      }
+    } );
+
+    editor.on( 'wptoolbar', function( event ) {
+      var footnoteNode, $footnoteNode, footnote, footnoteText, edit;
+
+      footnoteNode = event.element.className === 'footnote' ? event.element :
+        editor.dom.getParent( event.element, 'span.footnote' );
+
+      if ( footnoteNode ) {
+        $footnoteNode = editor.$( footnoteNode );
+        footnoteText = $footnoteNode.attr( 'data-footnote' );
+        edit = $footnoteNode.attr( 'data-footnote-edit' );
+
+        if ( edit ) {
+          if ( footnoteText ) {
+            inputInstance.setFootnoteText( footnoteText );            
+          }
+          event.element = footnoteNode;
+          event.toolbar = editToolbar;
+        } else {
+          previewInstance.setFootnoteStub( footnoteText );
+          event.element = footnoteNode;
+          event.toolbar = toolbar;
+        }
+      }
+    } );
+
+    editor.addButton( 'footnote_edit', {
+      tooltip: 'Edit ', // trailing space as per wp_link_edit plugin
+      icon: 'dashicon dashicons-edit',
+      cmd: 'footnote_edit'
+    } );
+
+    editor.addButton( 'footnote_remove', {
+      tooltip: 'Remove',
+      icon: 'dashicon dashicons-no',
+      cmd: 'footnote_remove'
+    } );
+
+    editor.addButton( 'footnote_apply', {
+      tooltip: 'Apply',
+      icon: 'dashicon dashicons-editor-break',
+      cmd: 'footnote_apply',
+      classes: 'widget btn primary'
+    } );
+
+    return {
+      close: function() {
+        // editToolbar.tempHide = false;
+        editor.execCommand( 'footnote_cancel' );
+      }
+    };
+  } );
+} )( window.tinymce );

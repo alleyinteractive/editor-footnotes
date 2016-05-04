@@ -1,0 +1,25 @@
+p {
+	/* TODO this is only applying to the content not mce UI */
+	/* see this is applied to content */
+	/* background-color: beige; */
+}
+
+/* this is not applied to UI scope */
+div.footnote-preview {
+	float: left;
+	margin: 5px;
+	max-width: 694px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+div.footnote-preview span {
+	color: #0073aa;
+	-webkit-transition-property: border, background, color;
+	transition-property: border, background, color;
+	-webkit-transition-duration: .05s;
+	transition-duration: .05s;
+	-webkit-transition-timing-function: ease-in-out;
+	transition-timing-function: ease-in-out;
+	cursor: pointer;
+}

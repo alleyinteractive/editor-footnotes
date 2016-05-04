@@ -10,6 +10,7 @@ class Editor {
 	public function setup() {
 		add_filter( 'mce_buttons', [ $this, 'add_buttons' ] );
 		add_filter( 'mce_external_plugins', [ $this, 'register_plugins' ] );
+		add_editor_style( URL . 'static/css/editor-plugin.css' );
 	}
 
 	public function register_plugins( $plugin_array ) {
