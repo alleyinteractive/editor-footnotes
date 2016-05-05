@@ -14,3 +14,9 @@ p {
 	overflow: hidden;
 	text-overflow: ellipsis;
 }
+
+.footnote-input {
+	float: left;
+	margin: 2px;
+	max-width: 694px;
+}
