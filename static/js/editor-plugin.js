@@ -54,7 +54,7 @@
     var $ = window.jQuery;
 
     function getSelectedFootnote() {
-      var footnote, html,
+      var content, html,
         node = editor.selection.getNode(),
         span = editor.dom.getParent( node, 'span[data-footnote]' );
 
@@ -78,7 +78,7 @@
     }
 
     function setPlaceholder() {
-      var text, $node;
+      var text, $placeholder;
       text = editor.selection.getContent( { format: 'raw' } );
       $placeholder = $( '<span class="footnote" />' ).attr( 'data-footnote-edit', true )
                                                      .attr( 'data-footnote', '' )
@@ -106,7 +106,7 @@
         toolbar = editor.wp._createToolbar( [
           'footnote_preview',
           'footnote_edit',
-          'footnote_remove',
+          'footnote_remove'
         ], true );
 
         var editButtons = [
@@ -201,7 +201,7 @@
     } );
 
     editor.on( 'wptoolbar', function( event ) {
-      var $footnoteNode, footnote, footnoteText, edit;
+      var $footnoteNode, footnoteText, edit;
 
       footnoteNode = editor.dom.hasClass(event.element, 'footnote') ? event.element :
         editor.dom.getParent( event.element, 'span.footnote' );
