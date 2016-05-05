@@ -174,6 +174,7 @@
     editor.addButton('editor_footnotes', {
       icon: 'dashicon dashicons-format-status',
       tooltip: 'Insert Footnote',
+      stateSelector: 'span.footnote',
       cmd: 'footnote_edit',
       onPostRender: function() {
         var self = this;
