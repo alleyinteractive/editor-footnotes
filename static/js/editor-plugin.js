@@ -14,7 +14,7 @@
 
       tinymce.$( this.getEl().firstChild ).text( stub );
     }
-  });
+  } );
 
   tinymce.ui.footnoteInput = tinymce.ui.Control.extend( {
     renderHtml: function() {
@@ -43,7 +43,7 @@
 
       footnoteInput.value = '';
     }
-  });
+  } );
 
   tinymce.PluginManager.add('editor_footnotes', function( editor ) {
     var toolbar;
@@ -93,10 +93,12 @@
       editor.$( 'span.footnote' ).each( function( i, element ) {
         var $element = editor.$( element );
 
-        if ( $element.attr( 'data-footnote-edit' ) ) {
+        if ( $element.attr( 'data-footnote' ) === '' ) {
+          editor.dom.remove( element, true );
+        } else if ( $element.attr( 'data-footnote-edit' ) ) {
           $element.attr( 'data-footnote-edit', null );
         }
-      });
+      } );
     }
 
     editor.on( 'preinit', function() {
@@ -114,11 +116,22 @@
 
         editToolbar = editor.wp._createToolbar( editButtons, true );
 
+        editToolbar.on( 'show', function() {
+          window.setTimeout( function() {
+            var element = editToolbar.$el.find( 'textarea' )[0];
+
+            if ( element ) {
+              element.focus();
+              element.select();
+            }
+          } );
+        } );
+
         editToolbar.on( 'hide', function() {
-          editor.execCommand( 'wp_link_cancel' );
+          editor.execCommand( 'footnote_cancel' );
         } );
       }
-    });
+    } );
 
     editor.addCommand( 'footnote_edit', function() {
       footnoteNode = getSelectedFootnote();
@@ -149,11 +162,13 @@
 
     editor.addCommand( 'footnote_cancel', function() {
       inputInstance.reset();
+      removePlaceholders();
       editor.focus();
     } );
 
     editor.addCommand( 'footnote_remove', function() {
       editor.dom.remove( footnoteNode, true );
+      removePlaceholders();
     } );
 
     editor.addButton('editor_footnotes', {
@@ -168,7 +183,7 @@
           self.disabled( !getSelectedFootnote() && '' === editor.selection.getContent() );
         });
       }
-    });
+    } );
 
     editor.addButton( 'footnote_preview', {
       type: 'footnotePreview',
@@ -185,9 +200,9 @@
     } );
 
     editor.on( 'wptoolbar', function( event ) {
-      var footnoteNode, $footnoteNode, footnote, footnoteText, edit;
+      var $footnoteNode, footnote, footnoteText, edit;
 
-      footnoteNode = event.element.className === 'footnote' ? event.element :
+      footnoteNode = editor.dom.hasClass(event.element, 'footnote') ? event.element :
         editor.dom.getParent( event.element, 'span.footnote' );
 
       if ( footnoteNode ) {
