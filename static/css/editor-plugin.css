@@ -1,0 +1,20 @@
+.mce-container .footnote-preview {
+	float: left;
+	margin: 5px;
+	max-width: 694px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.mce-container .footnote-input {
+	float: left;
+	margin: 2px;
+	max-width: 694px;
+	min-width: 400px;
+}
+
+.mce-container .footnote-input textarea {
+	width: 100%;
+	white-space: pre-wrap;
+	background-color: #FFFFFF;
+}
