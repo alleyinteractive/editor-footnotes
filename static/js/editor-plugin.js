@@ -18,11 +18,10 @@
 
   tinymce.ui.footnoteInput = tinymce.ui.Control.extend( {
     renderHtml: function() {
-      // TODO - remove inline styles when css hooked up correctly
       return (
         '<div id="' + this._id + '" class="footnote-input">' +
-          '<textarea hidefocus="1" rows="5" placeholder="' + tinymce.translate( 'Enter Footnote' ) +
-          '" style="background-color: white;"></textarea>' +
+          '<textarea rows="5" placeholder="' +
+          tinymce.translate( 'Enter Footnote' ) + '"></textarea>' +
         '</div>'
       );
     },
@@ -153,7 +152,11 @@
         text = inputInstance.getFootnoteText();
         editor.focus();
 
-        editor.dom.setAttribs( footnoteNode, { 'data-footnote': text, 'data-footnote-edit': null } );
+        if (text) {
+          editor.dom.setAttribs( footnoteNode, { 'data-footnote': text, 'data-footnote-edit': null } );          
+        } else {
+          editor.execCommand('footnote_remove');
+        }
       }
 
       inputInstance.reset();
@@ -196,7 +199,17 @@
     editor.addButton( 'footnote_input', {
       type: 'footnoteInput',
       onPostRender: function() {
+        var element = this.getEl(),
+          input = element.firstChild;
+
         inputInstance = this;
+
+        tinymce.$( input ).on( 'keydown', function( event ) {
+          if ( event.keyCode === 13 ) {
+            editor.execCommand( 'footnote_apply' );
+            event.preventDefault();
+          }
+        } );
       }
     } );
 
