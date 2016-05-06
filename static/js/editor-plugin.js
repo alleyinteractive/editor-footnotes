@@ -21,7 +21,7 @@
       // TODO - remove inline styles when css hooked up correctly
       return (
         '<div id="' + this._id + '" class="footnote-input">' +
-          '<textarea hidefocus="1" rows="3" placeholder="' + tinymce.translate( 'Enter Footnote' ) +
+          '<textarea hidefocus="1" rows="5" placeholder="' + tinymce.translate( 'Enter Footnote' ) +
           '" style="background-color: white;"></textarea>' +
         '</div>'
       );
@@ -213,7 +213,7 @@
 
         if ( edit ) {
           if ( footnoteText ) {
-            inputInstance.setFootnoteText( footnoteText );            
+            inputInstance.setFootnoteText( footnoteText );
           }
           event.element = footnoteNode;
           event.toolbar = editToolbar;
