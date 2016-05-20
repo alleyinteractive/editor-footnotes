@@ -52,3 +52,18 @@ spl_autoload_register( '\Editor_Footnotes\autoload' );
 
 // Load the Editor class on admin pages
 add_action( 'admin_init', [ '\Editor_Footnotes\Editor', 'instance' ] );
+
+/**
+ * Allow span[data-footnote] to pass through post content.
+ *
+ * @param  array $kses Allowed HTML tags.
+ * @param  string $context Kses context.
+ * @return array
+ */
+function wp_kses_allowed_html( $kses, $context ) {
+	if ( 'post' === $context ) {
+		$kses['span']['data-footnote'] = true;
+	}
+	return $kses;
+}
+add_filter( 'wp_kses_allowed_html', '\Editor_Footnotes\wp_kses_allowed_html', 10, 2 );
