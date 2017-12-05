@@ -1,5 +1,5 @@
 ( function( tinymce ) {
-  tinymce.ui.footnotePreview = tinymce.ui.Control.extend( {
+  tinymce.ui.Factory.add( 'footnotePreview', tinymce.ui.Control.extend( {
     stub: '(empty)',
     renderHtml: function() {
       return (
@@ -14,9 +14,9 @@
 
       tinymce.$( this.getEl().firstChild ).text( stub );
     }
-  } );
+  } ) );
 
-  tinymce.ui.footnoteInput = tinymce.ui.Control.extend( {
+  tinymce.ui.Factory.add( 'footnoteInput', tinymce.ui.Control.extend( {
     renderHtml: function() {
       return (
         '<div id="' + this._id + '" class="footnote-input">' +
@@ -42,7 +42,7 @@
 
       footnoteInput.value = '';
     }
-  } );
+  } ) );
 
   tinymce.PluginManager.add('editor_footnotes', function( editor ) {
     var toolbar;
@@ -153,7 +153,7 @@
         editor.focus();
 
         if (text) {
-          editor.dom.setAttribs( footnoteNode, { 'data-footnote': text, 'data-footnote-edit': null } );          
+          editor.dom.setAttribs( footnoteNode, { 'data-footnote': text, 'data-footnote-edit': null } );
         } else {
           editor.execCommand('footnote_remove');
         }
